@@ -27,16 +27,8 @@ RSpec.describe Project, type: :model do
 
   #3章演習/projectモデルのバリデーションテスト
   it "is valid with a name" do
-      user = User.create(
-        first_name: "Joe",
-        last_name: "Tester",
-        email: "joetester@example.com",
-        password: "dottle-nouveau-pavilion-tights-furze",
-        )
-      project = Project.new(
-        owner: user,
-        name: "Project_name",
-    )
+      user = FactoryBot.create(:user)
+      project = FactoryBot.create(:project, owner: user, name: "Project_name")
     expect(project).to be_valid
   end
 
@@ -48,31 +40,19 @@ RSpec.describe Project, type: :model do
 
   # ユーザー単位では重複したプロジェクト名を許可しないこと
   it "does not allow duplicate project names per user" do
-    user = User.create(
-      first_name: "Joe",
-      last_name:  "Tester",
-      email:      "joetester@example.com",
-      password:   "dottle-nouveau-pavilion-tights-furze",
-    )
+    user = FactoryBot.create(:user)
     user.projects.create(
       name: "Test Project",
     )
     new_project = user.projects.build(
       name: "Test Project",
     )
-    
     new_project.valid?
     expect(new_project.errors[:name]).to include("has already been taken")
   end
 
   it "allows two users to share a project name" do
-    user = User.create(
-    first_name: "Joe",
-    last_name: "Tester",
-    email: "joetester@example.com",
-    password: "dottle-nouveau-pavilion-tights-furze",
-    )
-
+    user = FactoryBot.create(:user)
     user.projects.create(
       name: "Test Project",
     )

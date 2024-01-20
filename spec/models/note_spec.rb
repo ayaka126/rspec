@@ -71,32 +71,21 @@ require 'rails_helper'
   #   expect(note.user_name).to eq "Fake User"
   # end
 
-  #3章　describe,contextでDRYしたRspec
+  #3章　describe,contextでDRY、4章でFactoryBotを使用したRspec
 RSpec.describe Note, type: :model do
   before do
-    @user = User.create(
-      first_name: "Joe",
-      last_name:  "Tester",
-      email:      "joetester@example.com",
-      password:   "dottle-nouveau-pavilion-tights-furze",
-    )
-    @project = @user.projects.create(
-      name: "Test Project",
-    )
+    @user = FactoryBot.create(:user)
+    @project = FactoryBot.create(:project)
   end
 # ユーザー、プロジェクト、メッセージがあれば有効な状態であること
   it "is valid with a user, project, and message" do
-    note = Note.new(
-      message: "This is a sample note.",
-      user: @user,
-      project: @project,
-    )
+    note = FactoryBot.create(:note)
     expect(note).to be_valid
   end
 
 # メッセージがなければ無効な状態であること
   it "is invalid without a message" do
-    note = Note.new(message: nil)
+    note = FactoryBot.build(:note, message: nil)
     note.valid?
     expect(note.errors[:message]).to include("can't be blank")
   end
