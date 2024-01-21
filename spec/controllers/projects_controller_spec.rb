@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe ProjectsController, type: :controller do
   describe "#index" do
+    #認可されたユーザーとして
     context "as an authenticated user" do
       before do
         @user = FactoryBot.create(:user)
@@ -17,7 +18,7 @@ RSpec.describe ProjectsController, type: :controller do
         end
       end
     end
-
+    #ゲストとして
     context "as a guest" do
       it "returns a 302 response" do
         get :index
@@ -32,6 +33,7 @@ RSpec.describe ProjectsController, type: :controller do
   end
 
   describe "#show" do
+    #認可されたユーザーとして
     context "as an authorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -44,7 +46,111 @@ RSpec.describe ProjectsController, type: :controller do
         expect(response).to be_successful
       end
     end
+    #認可されていない別のユーザーとして(other_user)
+    context "as an unauthorized user" do
+      before do
+        @user = FactoryBot.create(:user)
+        other_user = FactoryBot.create(:user)
+        @project = FactoryBot.create(:project, owner: other_user)
+      end
 
+      it "redirects to the dashboard" do
+        sign_in @user
+        get :show, params: { id: @project.id }
+        expect(response).to redirect_to root_path
+      end
+    end
+  end
+  #5章演習問題/newアクション
+  describe "#new" do
+    #認可されたユーザーとして
+    context "as an authorized user" do
+      before do
+        @user = FactoryBot.create(:user)
+        @project = FactoryBot.create(:project, owner: @user)
+      end
+
+      it "responds successfully" do
+        sign_in @user
+        get :new, params: { id: @project.id }
+        expect(response).to be_successful
+      end
+    end
+    #ゲストとして
+    context "as a guest" do
+      it "returns a 302 response" do
+        get :new
+        expect(response).to have_http_status "302"
+      end
+
+      it "redirects to the sign-in page" do
+        get :new
+        expect(response).to redirect_to "/users/sign_in"
+      end
+    end
+  end
+
+  describe "#create" do
+    #認証済みのユーザーとして
+    context "as an authenticated user" do
+      before do
+        @user = FactoryBot.create(:user)
+      end
+      #有効な属性値の場合（バリデーションエラーがない場合）
+      context "with valid attributes" do
+        #プロジェクトが追加できること
+        it "adds a project" do
+          project_params = FactoryBot.attributes_for(:project)
+          sign_in @user
+          expect {
+            post :create, params: { project: project_params }
+          }.to change(@user.projects, :count).by(1)
+        end
+      end
+      #無効な属性値の場合（バリデーションエラーの場合）
+      context "with invalid attributes" do
+        #プロジェクトを追加できないこと(:invalidはtraitでname: nilで設定してある)
+        it "does not add a project" do
+          project_params = FactoryBot.attributes_for(:project, :invalid)
+          sign_in @user
+          expect {
+            post :create, params: { project: project_params }
+          }.to_not change(@user.projects, :count)
+        end
+      end
+    end
+    #ゲストとして
+    context "as a guest" do
+      it "returns a 302 response" do
+        project_params = FactoryBot.attributes_for(:project)
+        post :create, params: { project: project_params }
+        expect(response).to have_http_status "302"
+      end
+
+      it "redirects to the sign-in page" do
+        project_params = FactoryBot.attributes_for(:project)
+        post :create, params: { project: project_params }
+        expect(response).to redirect_to "/users/sign_in"
+      end
+    end
+  end
+  
+  #5章演習問題/editアクション
+  describe "#edit" do
+    #認可されたユーザーとして
+    context "as an authorized user" do
+      before do
+        @user = FactoryBot.create(:user)
+        @project = FactoryBot.create(:project, owner: @user)
+      end
+
+      it "responds successfully" do
+        sign_in @user
+        get :edit, params: { id: @project.id }
+        expect(response).to be_successful
+      end
+    end
+    #認可されていない別のユーザーとして(other_user)
     context "as an unauthorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -60,49 +166,8 @@ RSpec.describe ProjectsController, type: :controller do
     end
   end
 
-  describe "#create" do
-    context "as an authenticated user" do
-      before do
-        @user = FactoryBot.create(:user)
-      end
-
-      context "with valid attributes" do
-        it "adds a project" do
-          project_params = FactoryBot.attributes_for(:project)
-          sign_in @user
-          expect {
-            post :create, params: { project: project_params }
-          }.to change(@user.projects, :count).by(1)
-        end
-      end
-
-      context "with invalid attributes" do
-        it "does not add a project" do
-          project_params = FactoryBot.attributes_for(:project, :invalid)
-          sign_in @user
-          expect {
-            post :create, params: { project: project_params }
-          }.to_not change(@user.projects, :count)
-        end
-      end
-    end
-
-    context "as a guest" do
-      it "returns a 302 response" do
-        project_params = FactoryBot.attributes_for(:project)
-        post :create, params: { project: project_params }
-        expect(response).to have_http_status "302"
-      end
-
-      it "redirects to the sign-in page" do
-        project_params = FactoryBot.attributes_for(:project)
-        post :create, params: { project: project_params }
-        expect(response).to redirect_to "/users/sign_in"
-      end
-    end
-  end
-
   describe "#update" do
+    #認証されたユーザーとして
     context "as an authorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -117,7 +182,7 @@ RSpec.describe ProjectsController, type: :controller do
         expect(@project.reload.name).to eq "New Project Name"
       end
     end
-
+    #認証されていない別のユーザーとして
     context "as an unauthorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -143,6 +208,7 @@ RSpec.describe ProjectsController, type: :controller do
       end
     end
 
+    #ゲストとして
     context "as a guest" do
       before do
         @project = FactoryBot.create(:project)
@@ -163,6 +229,7 @@ RSpec.describe ProjectsController, type: :controller do
   end
 
   describe "#destroy" do
+    #認証されたユーザーとして
     context "as an authorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -176,7 +243,7 @@ RSpec.describe ProjectsController, type: :controller do
         }.to change(@user.projects, :count).by(-1)
       end
     end
-
+    #認証されていないユーザーとして
     context "as an unauthorized user" do
       before do
         @user = FactoryBot.create(:user)
@@ -197,7 +264,7 @@ RSpec.describe ProjectsController, type: :controller do
         expect(response).to redirect_to root_path
       end
     end
-
+    #ゲストとして
     context "as a guest" do
       before do
         @project = FactoryBot.create(:project)
