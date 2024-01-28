@@ -1,15 +1,15 @@
 require 'rails_helper'
 
 RSpec.describe "Projects", type: :system do
-  scenario "user creates a new project" do
-    user = FactoryBot.create(:user)
-    # using our custom login helper:
-    # sign_in_as user
-    # or the one provided by Devise:
+  let!(:user){ FactoryBot.create(:user) }
+  let!(:project) { FactoryBot.create(:project, owner: user) }
+
+  before do
     sign_in user
-
+  end
+    
+  scenario "user creates a new project" do
     visit root_path
-
     expect {
       click_link "New Project"
       fill_in "Name", with: "Test Project"
@@ -24,10 +24,27 @@ RSpec.describe "Projects", type: :system do
     }.to change(user.projects, :count).by(1)
   end
 
+  scenario "user edit a project" do
+
+    visit project_path(project)
+    click_link "Edit"
+
+    expect(page).to have_content "Editing project"
+    expect(page).to have_content "Name"
+    expect(page).to have_content "Description"
+    expect(page).to have_content "Due on"
+
+    fill_in "Name", with: "Test edit"
+    fill_in "Description", with: "Ttying edit"
+
+    click_button "Update Project"
+
+    expect(page).to \
+      have_content "Project was successfully updated."
+    expect(current_path).to eq project_path(project)
+  end
+
   scenario "user completes a project" do
-    user = FactoryBot.create(:user)
-    project = FactoryBot.create(:project, owner: user)
-    sign_in user
 
     visit project_path(project)
 

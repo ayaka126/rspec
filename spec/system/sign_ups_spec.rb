@@ -21,6 +21,9 @@ RSpec.describe "Sign-ups", type: :system do
         have_content "Welcome! You have signed up successfully."
       expect(current_path).to eq root_path
       expect(page).to have_content "First Last"
+      expect(page).to have_content "Sign Out"
+      expect(page).to have_content "Projects"
+      expect(page).to have_link "New Project"
     end
 
     mail = ActionMailer::Base.deliveries.last
