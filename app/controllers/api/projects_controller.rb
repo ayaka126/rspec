@@ -23,6 +23,16 @@ module Api
       end
     end
 
+    def destroy
+      @project = Project.find(params[:id])
+
+      if @project.destroy
+        render json: { status: :ok }
+      else
+        render json: @project.errors, status: :unprocessable_entity
+      end
+    end
+
     private
 
     def authenticate_user_from_token!

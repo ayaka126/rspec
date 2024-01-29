@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "Projects API", type: :request do
+  # 1件のプロジェクトを読み出すこと
   it 'loads a project' do
     user = FactoryBot.create(:user)
     FactoryBot.create(:project, name: "Sample Project")
@@ -26,7 +27,7 @@ RSpec.describe "Projects API", type: :request do
     expect(json["name"]).to eq "Second Sample Project"
     # Etc.
   end
-
+  # プロジェクトを作成できること
   it 'creates a project' do
     user = FactoryBot.create(:user)
     FactoryBot.create(:project, name: "Sample Project")
@@ -41,6 +42,22 @@ RSpec.describe "Projects API", type: :request do
         project: project_attributes
       }
     }.to change(user.projects, :count).by(1)
+
+    expect(response).to have_http_status(:success)
+  end
+
+  #プロジェクトを削除できること
+  it 'destroy a project' do
+    user = FactoryBot.create(:user)
+    FactoryBot.create(:project, name: "Sample Project")
+    project_to_destroy = FactoryBot.create(:project, name: "Sample Project", owner: user)
+
+    expect {
+      delete api_project_path(project_to_destroy), params: {
+        user_email: user.email,
+        user_token: user.authentication_token
+      }
+    }.to change(user.projects, :count).by(-1)
 
     expect(response).to have_http_status(:success)
   end
